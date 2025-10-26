@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>AIアシスタント</title>
   <style>
+    /* CSSは前回のコードからpurityScoreのスタイルを除去したものを使用 */
     body {
       font-family: Arial, sans-serif;
       display: flex;
@@ -61,7 +62,7 @@
         flex-direction: column;
     }
     
-    /* 3. ヘッダー (ポイント表示 HUD) */
+    /* 3. ヘッダー (ポイント表示を削除) */
     header {
       background-color: #ffffff;
       color: #333;
@@ -73,11 +74,7 @@
       align-items: center;
       flex-shrink: 0;
     }
-    #purityScore {
-      font-size: 18px;
-      color: #888;
-      font-weight: normal;
-    }
+    /* #purityScore の表示は削除 */
 
     /* 4. メインチャットエリア */
     #chatContainer {
@@ -163,8 +160,7 @@
   <div id="mainContent">
     <header>
       AIアシスタント
-      <div id="purityScore">ポイント: 0</div>
-    </header>
+      </header>
 
     <div id="chatContainer">
     </div>
@@ -180,19 +176,19 @@
     const chatContainer = document.getElementById('chatContainer');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
-    const purityScoreElement = document.getElementById('purityScore');
     const newChatBtn = document.getElementById('newChatBtn');
     const sessionList = document.getElementById('sessionList');
 
     // --- 状態管理 ---
-    let purity_score = 0; // Mintロジックの核となる変数
+    // purity_score は削除 (経済要素の排除)
     let currentSessionId = Date.now().toString();
     let sessions = {}; 
     
     // --- セッション管理ロジック (localStorage) ---
+    // 経済要素（purity）に関わるロジックを削除
 
     function loadSessions() {
-        const storedSessions = localStorage.getItem('logos_sessions');
+        const storedSessions = localStorage.getItem('pure_logos_sessions'); // キーを変更
         if (storedSessions) {
             sessions = JSON.parse(storedSessions);
         }
@@ -214,11 +210,10 @@
     function startNewSession() {
         if (currentSessionId && chatContainer.children.length > 0) { saveCurrentSession(); }
         currentSessionId = Date.now().toString();
-        purity_score = 0;
-        purityScoreElement.textContent = `ポイント: 0`;
+        // purity_score のリセットを削除
         chatContainer.innerHTML = '';
         renderSessionList();
-        addMessage("こんにちは。何か質問やアイデアがあれば入力してください。", 'aiMessage', 0);
+        addMessage("こんにちは。何か質問やアイデアがあれば入力してください。", 'aiMessage');
     }
 
     function loadSession(sessionId) {
@@ -226,10 +221,12 @@
         const session = sessions[sessionId];
         if (!session) return;
         currentSessionId = sessionId;
-        purity_score = session.purity;
-        purityScoreElement.textContent = `ポイント: ${purity_score}`;
+        // purity_score の読み込みを削除
         chatContainer.innerHTML = '';
-        session.messages.forEach(msg => { addMessage(msg.text, msg.className, msg.scoreGain, false); });
+        
+        // メッセージには経済要素（scoreGain）が含まれないためシンプルに読み込み
+        session.messages.forEach(msg => { addMessage(msg.text, msg.className, false); });
+        
         document.querySelectorAll('.sessionItem').forEach(item => { item.classList.toggle('active', item.dataset.sessionId == sessionId); });
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
@@ -242,43 +239,28 @@
             title: titleText,
             messages: Array.from(chatContainer.children).map(el => ({
                 text: el.textContent.trim(),
-                className: el.className.includes('userMessage') ? 'userMessage' : 'aiMessage',
-                scoreGain: el.dataset.score || 0
-            })),
-            purity: purity_score
+                className: el.className.includes('userMessage') ? 'userMessage' : 'aiMessage'
+                // scoreGain は削除
+            }))
+            // purity は削除
         };
-        localStorage.setItem('logos_sessions', JSON.stringify(sessions));
+        localStorage.setItem('pure_logos_sessions', JSON.stringify(sessions)); // キーを変更
         renderSessionList();
     }
     
-    function addMessage(text, className, scoreGain = 0, shouldSave = true) {
+    function addMessage(text, className, shouldSave = true) { // scoreGain引数を削除
       const msgDiv = document.createElement('div');
       msgDiv.className = 'message ' + className;
       msgDiv.textContent = text;
-      msgDiv.dataset.score = scoreGain;
+      // msgDiv.dataset.score は削除
       chatContainer.appendChild(msgDiv);
       chatContainer.scrollTop = chatContainer.scrollHeight;
       if (shouldSave) { saveCurrentSession(); }
     }
     
-    // --- 【ロジックの核】AI応答 ---
+    // --- 【ロジックの核】AI応答（経済要素完全排除） ---
     function aiRespond(userText) {
-      // Mintロジックの実行: ユーザーの入力に応じたポイント増加
-      let gain = 1;
-      const textLength = userText.length;
-
-      // メビウス変換の「価値の指標」をメタファーとした変動ロジック
-      if (textLength > 30) {
-          gain = 3; 
-      } else if (textLength > 10) {
-          gain = 2; 
-      } else {
-          gain = 1; 
-      }
-
-      // 状態変化（Mint）
-      purity_score += gain;
-      purityScoreElement.textContent = `ポイント: ${purity_score}`;
+      // Mintロジック（gain計算とpurity_score更新）を完全に削除
 
       // 実用性ゼロ（沈黙の独自性）を表現した、中立的な応答
       const neutralResponses = [
@@ -291,7 +273,7 @@
 
       const response = neutralResponses[Math.floor(Math.random() * neutralResponses.length)];
       
-      return { text: response, gain: gain };
+      return { text: response }; // gain の返却を削除
     }
     
     // --- 初期化実行 ---
@@ -303,7 +285,7 @@
         loadSession(currentSessionId);
     }
 
-    // --- イベントリスナー (Mint操作の実行) ---
+    // --- イベントリスナー (純粋な対話操作の実行) ---
     sendBtn.addEventListener('click', () => {
       const text = userInput.value.trim();
       if (!text) return;
@@ -311,8 +293,8 @@
       addMessage(text, 'userMessage');
       userInput.value = '';
 
-      const { text: responseText, gain: scoreGain } = aiRespond(text);
-      addMessage(responseText, 'aiMessage', scoreGain);
+      const { text: responseText } = aiRespond(text); // gain の取得を削除
+      addMessage(responseText, 'aiMessage'); // scoreGain の引数を削除
     });
 
     userInput.addEventListener('keypress', (e) => {

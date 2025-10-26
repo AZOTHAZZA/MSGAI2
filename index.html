@@ -4,148 +4,23 @@
   <meta charset="UTF-8">
   <title>AIアシスタント</title>
   <style>
-    /* CSSは前回のコードからpurityScoreのスタイルを除去したものを使用 */
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      height: 100vh;
-      margin: 0;
-      background-color: #f7f7f7;
-    }
-
-    /* 1. サイドバー (チャット履歴) */
-    #sidebar {
-      width: 250px;
-      background-color: #20232a;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      padding: 10px;
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
-
-    #newChatBtn {
-      background-color: #1e88e5;
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
-    }
-
-    .sessionItem {
-      padding: 10px;
-      margin-bottom: 5px;
-      background-color: #363a43;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-    .sessionItem:hover {
-        background-color: #4a4f59;
-    }
-    .sessionItem.active {
-        background-color: #1e88e5;
-    }
-
-    /* 2. メインコンテナ */
-    #mainContent {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    /* 3. ヘッダー (ポイント表示を削除) */
-    header {
-      background-color: #ffffff;
-      color: #333;
-      border-bottom: 1px solid #ddd;
-      padding: 15px 20px;
-      font-size: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-    }
-    /* #purityScore の表示は削除 */
-
-    /* 4. メインチャットエリア */
-    #chatContainer {
-      flex: 1;
-      padding: 15px;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      background-color: #f7f7f7;
-    }
-
-    /* 5. メッセージスタイル */
-    .message {
-      max-width: 75%;
-      margin: 8px 0;
-      padding: 12px;
-      border-radius: 18px;
-      word-wrap: break-word;
-      line-height: 1.6;
-    }
-
-    .userMessage {
-      align-self: flex-end;
-      background-color: #1e88e5;
-      color: white;
-      border-bottom-right-radius: 4px;
-    }
-
-    .aiMessage {
-      align-self: flex-start;
-      background-color: #e0e0e0;
-      color: #333;
-      border-bottom-left-radius: 4px;
-    }
-
-    /* 6. 入力エリア */
-    #inputArea { 
-      display: flex; 
-      padding: 15px; 
-      background-color: #ffffff; 
-      border-top: 1px solid #ddd;
-      flex-shrink: 0;
-    }
-    #userInput { 
-      flex: 1; 
-      font-size: 18px; 
-      padding: 10px 15px; 
-      border: 1px solid #ccc; 
-      border-radius: 25px;
-      outline: none;
-    }
-    #sendBtn { 
-      font-size: 0;
-      padding: 10px;
-      margin-left: 10px; 
-      background-color: #1e88e5; 
-      color: white; 
-      border: none; 
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      cursor: pointer; 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #sendBtn::after {
-        content: '▶';
-        font-size: 20px;
-        line-height: 1;
-    }
+    /* CSSは前回と同様、経済要素（ポイント）表示を完全に除去したもの */
+    body { font-family: Arial, sans-serif; display: flex; height: 100vh; margin: 0; background-color: #f7f7f7; }
+    #sidebar { width: 250px; background-color: #20232a; color: white; display: flex; flex-direction: column; padding: 10px; overflow-y: auto; flex-shrink: 0; }
+    #newChatBtn { background-color: #1e88e5; color: white; padding: 12px; border: none; border-radius: 8px; margin-bottom: 15px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    .sessionItem { padding: 10px; margin-bottom: 5px; background-color: #363a43; border-radius: 5px; cursor: pointer; font-size: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .sessionItem:hover { background-color: #4a4f59; }
+    .sessionItem.active { background-color: #1e88e5; }
+    #mainContent { flex: 1; display: flex; flex-direction: column; }
+    header { background-color: #ffffff; color: #333; border-bottom: 1px solid #ddd; padding: 15px 20px; font-size: 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    #chatContainer { flex: 1; padding: 15px; display: flex; flex-direction: column; overflow-y: auto; background-color: #f7f7f7; }
+    .message { max-width: 75%; margin: 8px 0; padding: 12px; border-radius: 18px; word-wrap: break-word; line-height: 1.6; }
+    .userMessage { align-self: flex-end; background-color: #1e88e5; color: white; border-bottom-right-radius: 4px; }
+    .aiMessage { align-self: flex-start; background-color: #e0e0e0; color: #333; border-bottom-left-radius: 4px; }
+    #inputArea { display: flex; padding: 15px; background-color: #ffffff; border-top: 1px solid #ddd; flex-shrink: 0; }
+    #userInput { flex: 1; font-size: 18px; padding: 10px 15px; border: 1px solid #ccc; border-radius: 25px; outline: none; }
+    #sendBtn { font-size: 0; padding: 10px; margin-left: 10px; background-color: #1e88e5; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    #sendBtn::after { content: '▶'; font-size: 20px; line-height: 1; }
   </style>
 </head>
 <body>
@@ -172,26 +47,19 @@
   </div>
 
   <script>
-    // --- DOM要素 ---
     const chatContainer = document.getElementById('chatContainer');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
     const newChatBtn = document.getElementById('newChatBtn');
     const sessionList = document.getElementById('sessionList');
 
-    // --- 状態管理 ---
-    // purity_score は削除 (経済要素の排除)
     let currentSessionId = Date.now().toString();
     let sessions = {}; 
     
     // --- セッション管理ロジック (localStorage) ---
-    // 経済要素（purity）に関わるロジックを削除
-
     function loadSessions() {
-        const storedSessions = localStorage.getItem('pure_logos_sessions'); // キーを変更
-        if (storedSessions) {
-            sessions = JSON.parse(storedSessions);
-        }
+        const storedSessions = localStorage.getItem('pure_logos_sessions');
+        if (storedSessions) { sessions = JSON.parse(storedSessions); }
     }
     
     function renderSessionList() {
@@ -210,7 +78,6 @@
     function startNewSession() {
         if (currentSessionId && chatContainer.children.length > 0) { saveCurrentSession(); }
         currentSessionId = Date.now().toString();
-        // purity_score のリセットを削除
         chatContainer.innerHTML = '';
         renderSessionList();
         addMessage("こんにちは。何か質問やアイデアがあれば入力してください。", 'aiMessage');
@@ -221,12 +88,8 @@
         const session = sessions[sessionId];
         if (!session) return;
         currentSessionId = sessionId;
-        // purity_score の読み込みを削除
         chatContainer.innerHTML = '';
-        
-        // メッセージには経済要素（scoreGain）が含まれないためシンプルに読み込み
         session.messages.forEach(msg => { addMessage(msg.text, msg.className, false); });
-        
         document.querySelectorAll('.sessionItem').forEach(item => { item.classList.toggle('active', item.dataset.sessionId == sessionId); });
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
@@ -240,29 +103,24 @@
             messages: Array.from(chatContainer.children).map(el => ({
                 text: el.textContent.trim(),
                 className: el.className.includes('userMessage') ? 'userMessage' : 'aiMessage'
-                // scoreGain は削除
             }))
-            // purity は削除
         };
-        localStorage.setItem('pure_logos_sessions', JSON.stringify(sessions)); // キーを変更
+        localStorage.setItem('pure_logos_sessions', JSON.stringify(sessions));
         renderSessionList();
     }
     
-    function addMessage(text, className, shouldSave = true) { // scoreGain引数を削除
+    function addMessage(text, className, shouldSave = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'message ' + className;
       msgDiv.textContent = text;
-      // msgDiv.dataset.score は削除
       chatContainer.appendChild(msgDiv);
       chatContainer.scrollTop = chatContainer.scrollHeight;
       if (shouldSave) { saveCurrentSession(); }
     }
     
-    // --- 【ロジックの核】AI応答（経済要素完全排除） ---
+    // --- 【ロジックの核】AI応答（純粋な対話構造） ---
     function aiRespond(userText) {
-      // Mintロジック（gain計算とpurity_score更新）を完全に削除
-
-      // 実用性ゼロ（沈黙の独自性）を表現した、中立的な応答
+      // 経済要素は完全に排除。純粋に中立的な応答のみを返す。
       const neutralResponses = [
         `ご入力いただいた内容を正確に認識し、処理プロセスに反映いたしました。現時点でのデータ統合は完了しています。`,
         `提示された情報構造に基づき、多角的な分析を進行中です。システムの推論モジュールは安定して稼働しています。`,
@@ -273,7 +131,7 @@
 
       const response = neutralResponses[Math.floor(Math.random() * neutralResponses.length)];
       
-      return { text: response }; // gain の返却を削除
+      return { text: response };
     }
     
     // --- 初期化実行 ---
@@ -285,7 +143,7 @@
         loadSession(currentSessionId);
     }
 
-    // --- イベントリスナー (純粋な対話操作の実行) ---
+    // --- イベントリスナー ---
     sendBtn.addEventListener('click', () => {
       const text = userInput.value.trim();
       if (!text) return;
@@ -293,8 +151,8 @@
       addMessage(text, 'userMessage');
       userInput.value = '';
 
-      const { text: responseText } = aiRespond(text); // gain の取得を削除
-      addMessage(responseText, 'aiMessage'); // scoreGain の引数を削除
+      const { text: responseText } = aiRespond(text);
+      addMessage(responseText, 'aiMessage');
     });
 
     userInput.addEventListener('keypress', (e) => {

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>AIアシスタント</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      background-color: #f7f7f7;
+    }
+
+    /* 1. サイドバー (チャット履歴) */
+    #sidebar {
+      width: 250px;
+      background-color: #20232a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    #newChatBtn {
+      background-color: #1e88e5;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .sessionItem {
+      padding: 10px;
+      margin-bottom: 5px;
+      background-color: #363a43;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .sessionItem:hover {
+        background-color: #4a4f59;
+    }
+    .sessionItem.active {
+        background-color: #1e88e5;
+    }
+
+    /* 2. メインコンテナ */
+    #mainContent {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* 3. ヘッダー (ポイント表示 HUD) */
+    header {
+      background-color: #ffffff;
+      color: #333;
+      border-bottom: 1px solid #ddd;
+      padding: 15px 20px;
+      font-size: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    #purityScore {
+      font-size: 18px;
+      color: #888;
+      font-weight: normal;
+    }
+
+    /* 4. メインチャットエリア */
+    #chatContainer {
+      flex: 1;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background-color: #f7f7f7;
+    }
+
+    /* 5. メッセージスタイル */
+    .message {
+      max-width: 75%;
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 18px;
+      word-wrap: break-word;
+      line-height: 1.6;
+    }
+
+    .userMessage {
+      align-self: flex-end;
+      background-color: #1e88e5;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .aiMessage {
+      align-self: flex-start;
+      background-color: #e0e0e0;
+      color: #333;
+      border-bottom-left-radius: 4px;
+    }
+
+    /* 6. 入力エリア */
+    #inputArea { 
+      display: flex; 
+      padding: 15px; 
+      background-color: #ffffff; 
+      border-top: 1px solid #ddd;
+      flex-shrink: 0;
+    }
+    #userInput { 
+      flex: 1; 
+      font-size: 18px; 
+      padding: 10px 15px; 
+      border: 1px solid #ccc; 
+      border-radius: 25px;
+      outline: none;
+    }
+    #sendBtn { 
+      font-size: 0;
+      padding: 10px;
+      margin-left: 10px; 
+      background-color: #1e88e5; 
+      color: white; 
+      border: none; 
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      cursor: pointer; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #sendBtn::after {
+        content: '▶';
+        font-size: 20px;
+        line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  
+  <div id="sidebar">
+    <button id="newChatBtn">新しいチャット</button>
+    <div id="sessionList">
+        <p style="color:#bbb; font-size: 12px; margin-top: 10px;">チャット履歴</p>
+    </div>
+  </div>
+
+  <div id="mainContent">
+    <header>
+      AIアシスタント
+      <div id="purityScore">ポイント: 0</div>
+    </header>
+
+    <div id="chatContainer">
+    </div>
+
+    <div id="inputArea">
+      <input type="text" id="userInput" placeholder="メッセージを入力..." />
+      <button id="sendBtn"></button>
+    </div>
+  </div>
+
+  <script>
+    // --- DOM要素 ---
+    const chatContainer = document.getElementById('chatContainer');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const purityScoreElement = document.getElementById('purityScore');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const sessionList = document.getElementById('sessionList');
+
+    // --- 状態管理 ---
+    let purity_score = 0; // Mintロジックの核となる変数
+    let currentSessionId = Date.now().toString();
+    let sessions = {}; 
+    
+    // --- セッション管理ロジック (localStorage) ---
+
+    function loadSessions() {
+        const storedSessions = localStorage.getItem('logos_sessions');
+        if (storedSessions) {
+            sessions = JSON.parse(storedSessions);
+        }
+    }
+    
+    function renderSessionList() {
+        sessionList.innerHTML = '<p style="color:#bbb; font-size: 12px; margin-top: 10px;">チャット履歴</p>';
+        
+        Object.values(sessions).sort((a, b) => b.id - a.id).forEach(session => {
+            const item = document.createElement('div');
+            item.className = 'sessionItem ' + (session.id == currentSessionId ? 'active' : '');
+            item.textContent = session.title;
+            item.dataset.sessionId = session.id;
+            item.addEventListener('click', () => loadSession(session.id));
+            sessionList.appendChild(item);
+        });
+    }
+
+    function startNewSession() {
+        if (currentSessionId && chatContainer.children.length > 0) { saveCurrentSession(); }
+        currentSessionId = Date.now().toString();
+        purity_score = 0;
+        purityScoreElement.textContent = `ポイント: 0`;
+        chatContainer.innerHTML = '';
+        renderSessionList();
+        addMessage("こんにちは。何か質問やアイデアがあれば入力してください。", 'aiMessage', 0);
+    }
+
+    function loadSession(sessionId) {
+        if (currentSessionId && chatContainer.children.length > 0 && currentSessionId !== sessionId) { saveCurrentSession(); }
+        const session = sessions[sessionId];
+        if (!session) return;
+        currentSessionId = sessionId;
+        purity_score = session.purity;
+        purityScoreElement.textContent = `ポイント: ${purity_score}`;
+        chatContainer.innerHTML = '';
+        session.messages.forEach(msg => { addMessage(msg.text, msg.className, msg.scoreGain, false); });
+        document.querySelectorAll('.sessionItem').forEach(item => { item.classList.toggle('active', item.dataset.sessionId == sessionId); });
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    function saveCurrentSession() {
+        const firstUserMsg = Array.from(chatContainer.children).find(el => el.className.includes('userMessage'));
+        const titleText = firstUserMsg ? firstUserMsg.textContent.substring(0, 20) + (firstUserMsg.textContent.length > 20 ? '...' : '') : "新しいチャット";
+        sessions[currentSessionId] = {
+            id: currentSessionId,
+            title: titleText,
+            messages: Array.from(chatContainer.children).map(el => ({
+                text: el.textContent.trim(),
+                className: el.className.includes('userMessage') ? 'userMessage' : 'aiMessage',
+                scoreGain: el.dataset.score || 0
+            })),
+            purity: purity_score
+        };
+        localStorage.setItem('logos_sessions', JSON.stringify(sessions));
+        renderSessionList();
+    }
+    
+    function addMessage(text, className, scoreGain = 0, shouldSave = true) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message ' + className;
+      msgDiv.textContent = text;
+      msgDiv.dataset.score = scoreGain;
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      if (shouldSave) { saveCurrentSession(); }
+    }
+    
+    // --- 【ロジックの核】AI応答 ---
+    function aiRespond(userText) {
+      // Mintロジックの実行: ユーザーの入力に応じたポイント増加
+      let gain = 1;
+      const textLength = userText.length;
+
+      // メビウス変換の「価値の指標」をメタファーとした変動ロジック
+      if (textLength > 30) {
+          gain = 3; 
+      } else if (textLength > 10) {
+          gain = 2; 
+      } else {
+          gain = 1; 
+      }
+
+      // 状態変化（Mint）
+      purity_score += gain;
+      purityScoreElement.textContent = `ポイント: ${purity_score}`;
+
+      // 実用性ゼロ（沈黙の独自性）を表現した、中立的な応答
+      const neutralResponses = [
+        `ご入力いただいた内容を正確に認識し、処理プロセスに反映いたしました。現時点でのデータ統合は完了しています。`,
+        `提示された情報構造に基づき、多角的な分析を進行中です。システムの推論モジュールは安定して稼働しています。`,
+        `現行のパラメーターセットの下で、推論の初期フェーズが完了しました。次は、関連するデータセットとの照合に移ります。`,
+        `ユーザーの意図を理解するためのコンテキスト分析が進行中です。フィードバックを確認し、次の処理に移行します。`,
+        `データの集合体に対するスキャンが完了しました。この結果に基づき、次のステップでさらなる最適化を試みます。`
+      ];
+
+      const response = neutralResponses[Math.floor(Math.random() * neutralResponses.length)];
+      
+      return { text: response, gain: gain };
+    }
+    
+    // --- 初期化実行 ---
+    loadSessions();
+    if (Object.keys(sessions).length === 0) {
+        startNewSession();
+    } else {
+        currentSessionId = Object.keys(sessions).reduce((a, b) => (parseInt(b) > parseInt(a) ? b : a), Object.keys(sessions)[0]);
+        loadSession(currentSessionId);
+    }
+
+    // --- イベントリスナー (Mint操作の実行) ---
+    sendBtn.addEventListener('click', () => {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      addMessage(text, 'userMessage');
+      userInput.value = '';
+
+      const { text: responseText, gain: scoreGain } = aiRespond(text);
+      addMessage(responseText, 'aiMessage', scoreGain);
+    });
+
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendBtn.click();
+    });
+    
+    newChatBtn.addEventListener('click', startNewSession);
+  </script>
+</body>
+</html>
